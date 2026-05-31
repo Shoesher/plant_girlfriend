@@ -1,7 +1,9 @@
+// ignore_for_file: prefer_interpolation_to_compose_strings
+
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:plant_girlfriend/pages/settings.dart';
-import 'package:plant_girlfriend/pages/network.dart';
+import 'package:plant_girlfriend/pages/Settings.dart';
+import 'package:plant_girlfriend/pages/Network.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -10,12 +12,19 @@ class Home extends StatefulWidget {
 }
 
 class _Home extends State<Home> {
-  
+  final network mainNetwork = network();
   bool _showSidebar = false;
 
   @override
   void initState() {
     super.initState();
+    mainNetwork.connectSocket();
+  }
+
+  @override
+  void dispose() {
+    mainNetwork.disconnectSocket();
+    super.dispose();
   }
 
   @override
@@ -55,9 +64,21 @@ class _Home extends State<Home> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildBox(),
-                        _buildBox(),
-                        _buildBox(),
+                        StreamBuilder<String>(
+                          stream: mainNetwork.socketHandler.incomingMessagesStream,
+                          builder: (context, snapshot) {
+                            if (snapshot.hasData) {
+                              mainNetwork.parseSocket(snapshot.data!);
+                            }
+                            return Column(
+                              children: [
+                                _buildBox('Brightness: ' + mainNetwork.brightness),
+                                _buildBox('Humidity: ' + mainNetwork.humidity),
+                                _buildBox('Temperature: ' + mainNetwork.temperature),
+                              ],
+                            );
+                          },
+                        ),
                         const SizedBox(height: 20),
                       ],
                     ),
@@ -125,8 +146,8 @@ class _Home extends State<Home> {
     );
   }
 
-  Widget _buildBox(String displayedValue){
-      return Container(
+  Widget _buildBox(String displayedValue) {
+    return Container(
       width: 200.0,
       height: 150.0,
       decoration: BoxDecoration(
@@ -134,13 +155,13 @@ class _Home extends State<Home> {
         borderRadius: BorderRadius.circular(20.0),
       ),
       child: Text(
-                displayedValue,
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12,
-                ),
-              ),
+        displayedValue,
+        style: const TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.bold,
+          fontSize: 12,
+        ),
+      ),
     );
   }
 }

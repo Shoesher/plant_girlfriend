@@ -3,7 +3,7 @@ import 'dart:convert';
 
 class network {
   //Networking objects
-  String targetAddress = '10.0.0.97'; 
+  String targetAddress = 'ws://10.0.0.97'; 
 
   final connectionConfig = SocketConnectionOptions(
     pingIntervalMs: 1500,

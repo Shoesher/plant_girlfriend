@@ -15,6 +15,7 @@ class network {
   String brightness = 'Null';
   String humidity = 'Null';
   String temperature = 'Null';
+  String moisture = 'Null';
 
     //Connect to the web socket and get json file
 
@@ -31,17 +32,19 @@ class network {
       brightness = 'Failed to fetch';
       humidity = 'Failed to fetch';
       temperature = 'Failed to fetch';
+      moisture = 'Failed to fetch';
       print("Connection failed");
     }
-
-    print("Connection Success");
-    socketHandler.incomingMessagesStream.listen(
-        (message) {
-        parseSocket(message);
-      },
-      onError: (error) => print('Stream error:' + error),
-      onDone: () => print('Connection closed'),
-    );
+    else{
+      print("Connection Success");
+      socketHandler.incomingMessagesStream.listen(
+          (message) {
+          parseSocket(message);
+        },
+        onError: (error) => print('Stream error:' + error),
+        onDone: () => print('Connection closed'),
+      );
+    }
   }
 
   Future<void> disconnectSocket() async {
@@ -58,10 +61,11 @@ class network {
       brightness  = data['brightness']?.toString()  ?? brightness;
       humidity    = data['humidity']?.toString()    ?? humidity;
       temperature = data['temperature']?.toString() ?? temperature;
+      moisture = data['moisture']?.toString() ?? moisture;
 
-      print('[Network] brightness=$brightness  humidity=$humidity  temperature=$temperature');
+      print('brightness=$brightness  humidity=$humidity  temperature=$temperature moisture=$moisture');
     } catch (e) {
-      print('[Network] JSON parse error: $e');
+      print('JSON parse error: $e');
     }
   }
 }

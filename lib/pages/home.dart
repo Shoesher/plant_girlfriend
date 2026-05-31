@@ -75,6 +75,7 @@ class _Home extends State<Home> {
                                 _buildBox('Brightness: ' + mainNetwork.brightness),
                                 _buildBox('Humidity: ' + mainNetwork.humidity),
                                 _buildBox('Temperature: ' + mainNetwork.temperature),
+                                _buildBox('Moisture: ' + mainNetwork.moisture)
                               ],
                             );
                           },

@@ -30,7 +30,7 @@ class _Home extends State<Home> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF121212),
+      backgroundColor: const Color.fromARGB(255, 255, 246, 234),
       body: Stack(
         children: [
           Column(
@@ -44,7 +44,7 @@ class _Home extends State<Home> {
                     fontSize: 35,
                   ),
                 ),
-                backgroundColor: const Color.fromARGB(255, 112, 255, 56),
+                backgroundColor: const Color.fromARGB(255, 163, 255, 126),
                 elevation: 0,
                 actions: [
                   IconButton(
@@ -72,10 +72,10 @@ class _Home extends State<Home> {
                             }
                             return Column(
                               children: [
-                                _buildBox('Brightness: ' + mainNetwork.brightness),
-                                _buildBox('Humidity: ' + mainNetwork.humidity),
-                                _buildBox('Temperature: ' + mainNetwork.temperature),
-                                _buildBox('Moisture: ' + mainNetwork.moisture)
+                                _buildBox('Brightness: ', mainNetwork.brightness + "%"),
+                                _buildBox('Humidity: ', mainNetwork.humidity + "%"),
+                                _buildBox('Temperature: ', mainNetwork.temperature + " °C"),
+                                _buildBox('Moisture: ', mainNetwork.moisture + "%")
                               ],
                             );
                           },
@@ -97,7 +97,7 @@ class _Home extends State<Home> {
               },
               child: Container(
                 // ignore: deprecated_member_use
-                color: Colors.black.withOpacity(0.5),
+                color: const Color.fromARGB(255, 135, 255, 131).withOpacity(0.5),
               ),
             ),
           AnimatedPositioned(
@@ -115,7 +115,7 @@ class _Home extends State<Home> {
   Widget _buildSideBar(BuildContext context) {
     return Container(
       width: 250,
-      color: const Color(0xFF1E1E1E),
+      color: const Color.fromARGB(255, 30, 30, 30),
       child: Column(
         children: [
           const DrawerHeader(
@@ -147,22 +147,43 @@ class _Home extends State<Home> {
     );
   }
 
-  Widget _buildBox(String displayedValue) {
+  Widget _buildBox(String title, String displayedValue) {
     return Container(
       width: 200.0,
       height: 150.0,
       decoration: BoxDecoration(
-        color: Colors.black,
+        color: const Color.fromARGB(255, 204, 255, 202),
         borderRadius: BorderRadius.circular(20.0),
-      ),
-      child: Text(
-        displayedValue,
-        style: const TextStyle(
-          color: Colors.white,
-          fontWeight: FontWeight.bold,
-          fontSize: 12,
-        ),
-      ),
+        
+      ),       
+      child: Column(
+        children: <Widget>[
+          Container(
+            width: 200.0,
+            height: 25.0,
+            decoration: BoxDecoration(
+              color: const Color.fromARGB(255, 132, 180, 131),
+              borderRadius: BorderRadius.circular(20.0),
+            ),
+            child: Padding(
+              padding: EdgeInsets.only(left: 8.0),
+              child: Text(
+                title
+              )
+            )     
+          ),
+          Center(
+            child: Text(
+              displayedValue,
+              style: const TextStyle(
+                color: Color.fromARGB(255, 122, 158, 117),
+                fontWeight: FontWeight.bold,
+                fontSize: 60,
+              ),
+            )
+        )],
+      )
     );
+    
   }
 }

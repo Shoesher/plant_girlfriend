@@ -27,8 +27,11 @@ class network {
   );
 
   Future<void> connectSocket() async {
-    final bool activeConnection = await socketHandler.connect();
+    bool activeConnection = await socketHandler.connect();
     if(!activeConnection){
+      while(!activeConnection){
+        activeConnection = await socketHandler.connect();
+      }
       brightness = 'Failed to fetch';
       humidity = 'Failed to fetch';
       temperature = 'Failed to fetch';

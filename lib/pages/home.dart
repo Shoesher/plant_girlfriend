@@ -70,13 +70,15 @@ class _Home extends State<Home> {
                             if (snapshot.hasData) {
                               mainNetwork.parseSocket(snapshot.data!);
                             }
-                            return Column(
-                              children: [
-                                _buildBox('Brightness: ', mainNetwork.brightness + "%"),
-                                _buildBox('Humidity: ', mainNetwork.humidity + "%"),
-                                _buildBox('Temperature: ', mainNetwork.temperature + " °C"),
-                                _buildBox('Moisture: ', mainNetwork.moisture + "%")
-                              ],
+                            return Center(
+                              child: Column(
+                                children: [
+                                  _buildBox('Brightness: ', mainNetwork.brightness + "%"),
+                                  _buildBox('Humidity: ', mainNetwork.humidity + "%"),
+                                  _buildBox('Temperature: ', mainNetwork.temperature + " °C"),
+                                  _buildBox('Moisture: ', mainNetwork.moisture + "%")
+                                ],
+                              )
                             );
                           },
                         ),

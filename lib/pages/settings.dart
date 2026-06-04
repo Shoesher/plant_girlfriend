@@ -242,7 +242,7 @@ class _SettingsPageState extends State<Settings> {
                           // For a full app, you would notify MaterialApp to change theme here
                         },
                         secondary: const Icon(Icons.dark_mode_outlined, color: Colors.white),
-                        activeColor: Colors.blueAccent,
+                        activeThumbColor: Colors.blueAccent,
                       ),
                       const Divider(indent: 16, endIndent: 16), // Visual separator
                       ListTile(

@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:plant_girlfriend/pages/Settings.dart';
 import 'package:plant_girlfriend/pages/Network.dart';
+import 'package:plant_girlfriend/pages/game.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -133,6 +134,14 @@ class _Home extends State<Home> {
               Navigator.push(context,
                   MaterialPageRoute(builder: (context) => const Settings()));
             },
+          ),
+          ListTile(
+            leading: const Icon(Icons.abc, color: Colors.white),
+            title: const Text('Game', style: TextStyle(color: Colors.white)),
+            onTap: () {
+              Navigator.push(context,
+                  MaterialPageRoute(builder: (context) => const Game()));
+            }
           ),
           ListTile(
             leading: const Icon(Icons.book_outlined, color: Colors.white),

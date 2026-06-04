@@ -58,7 +58,7 @@ class Game_ extends State<Game>{
     final directory = await getApplicationDocumentsDirectory();
     final path = directory.path;
 
-    final storyHtml = await File('$path/PlantGirlTwine.html').readAsString();
+    final storyHtml = await File('assets/PlantGirlTwine.html').readAsString();
 
     await parser.parseStory(storyHtml);
     final startPassage = parser.getStartPassage();

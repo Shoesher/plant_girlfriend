@@ -3,7 +3,6 @@ import 'dart:core';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:twine_parser/twine_parser.dart';
 
 
@@ -18,6 +17,7 @@ class Game_ extends State<Game>{
   final parser = TwineParser();
   late Future<Passage> futurePassage;
   Passage? currentPassage;
+  int _speed = 70;
 
   @override
   void initState() {
@@ -52,30 +52,49 @@ class Game_ extends State<Game>{
           return 
           Align(
             alignment: Alignment(0, 0.8),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Align(
-                  alignment: AlignmentGeometry.xy(0.6, 0),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      border: Border.all(color: const Color.fromARGB(255, 60, 105, 70), width: 3),
-                      borderRadius: BorderRadius.circular(5)
-                    ),
-                    child: _buildChoices(currentPassage!.choices),
-                  )
-                ),
-                const SizedBox(height: 2),
-                Align(
-                  child: DialogueBox(speaker: 'Plant Chan', text: currentPassage!.content),
-                ),
-                _speedUp()
-              ],
+            child: SizedBox(
+              width: 1000,
+              height: 400,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Align(
+                    alignment: AlignmentGeometry.xy(1, 0),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        border: Border.all(color: const Color.fromARGB(255, 60, 105, 70), width: 3),
+                        borderRadius: BorderRadius.circular(5)
+                      ),
+                      child: _buildChoices(currentPassage!.choices),
+                    )
+                  ),
+                  const SizedBox(height: 2),
+                  Align(
+                    child: DialogueBox(speaker: 'Plant Chan', text: currentPassage!.content, speed: _speed),
+                  ),
+                  _speedUp()
+                ],
+              )
             )
           );
         }),
       )
     );
+  }
+  /// First value returns the image url.
+  /// Second value returns the rest of the content.
+  List<String> parseImage(String content){
+    // Extract text inside <>
+    RegExp tagRegex = RegExp(r'<(.*?)>');
+    Match? match = tagRegex.firstMatch(content);
+    String? tagContent = match?.group(1); // 'name'
+
+    // Remove the <> and its contents from the string
+    String rest = content.replaceAll(RegExp(r'\s*<.*?>'), '').trim(); // 'Hello, my name is.'
+
+    List<String> result = [tagContent!, rest];
+
+    return result;
   }
   
 
@@ -101,18 +120,20 @@ class Game_ extends State<Game>{
   }
 
   Widget _buildChoices(List<Choice> choices){
-    return Wrap(
+    return Column(
       spacing: 10,
-      runSpacing: 10,
-      alignment: WrapAlignment.center,
-
+      // runSpacing: 10,
+      // alignment: WrapAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.end,
       children: 
         choices.map((choice) {
           return ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: Color.fromARGB(255, 73, 129, 82)
             ),
-            onPressed: () => updatePassage(choice.targetPassage), 
+            onPressed: () {
+              updatePassage(choice.targetPassage);
+            },
             child: Text(
               choice.text,
               style: TextStyle(color: Colors.white),
@@ -126,38 +147,81 @@ class Game_ extends State<Game>{
   Widget _speedUp() {
         return TextButton(
           child: Text('Speed Up'),
-          onPressed: () => DialogueBox.speed = 45);
+          onPressed: () => setState(() => _speed = 20));
   }
 }
 
-class DialogueBox extends StatelessWidget{
+class DialogueBox extends StatefulWidget {
   final String speaker;
   final String text;
-  String currentText = "";
-  static int speed = 70;
+  final int speed;
 
-  DialogueBox({super.key, required this.speaker, required this.text});
+  const DialogueBox({
+    super.key,
+    required this.speaker,
+    required this.text,
+    required this.speed,
+  });
 
-  Stream<String> _getTextStream(String fullPassage) async* {
-    for(int i=0; i < fullPassage.length; i++){
-      await Future.delayed(Duration(milliseconds: speed));
-      String currentChar = fullPassage[i];
-      yield currentChar;
-    }
-    yield ' ';
+  @override
+  State<DialogueBox> createState() => _DialogueBoxState();
+}
+
+class _DialogueBoxState extends State<DialogueBox> {
+  String _displayed = '';
+  int _index = 0;
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _restart();
   }
 
-  late final Stream<String> textStream = _getTextStream(text);
+  @override
+  void didUpdateWidget(DialogueBox oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.text != widget.text) {
+      _restart();
+    } else if (oldWidget.speed != widget.speed) {
+      _startTimer();
+    }
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  void _restart() {
+    _displayed = '';
+    _index = 0;
+    _startTimer();
+  }
+
+  void _startTimer() {
+    _timer?.cancel();
+    if (_index >= widget.text.length) return;
+    _timer = Timer.periodic(Duration(milliseconds: widget.speed), (timer) {
+      if (_index >= widget.text.length) {
+        timer.cancel();
+        return;
+      }
+      setState(() {
+        _displayed += widget.text[_index];
+        _index++;
+      });
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     final boxHeight = 200.0;
 
-    return 
-    Opacity(
+    return Opacity(
       opacity: 1,
-      child: 
-      Container(
+      child: Container(
         alignment: Alignment.bottomCenter,
         width: 1000,
         height: boxHeight,
@@ -175,35 +239,19 @@ class DialogueBox extends StatelessWidget{
               ),
               child: Padding(
                 padding: EdgeInsetsGeometry.only(left: 10, top: 2, bottom: 2),
-                child: Text(speaker)
+                child: Text(widget.speaker)
               ),
             ),
             Container(
               width: double.infinity,
               height: boxHeight - 25.0,
-              decoration: BoxDecoration(
-                
-              ),
+              decoration: BoxDecoration(),
               child: Padding(
                 padding: EdgeInsetsGeometry.only(left: 10, top: 2, bottom: 2),
-                child: StreamBuilder<String>(
-                          stream: textStream,
-                          builder: (context, snapshot) {
-                            if (snapshot.hasData) {
-                              currentText += snapshot.requireData;
-                              return Text(
-                                currentText,
-                                style: TextStyle(fontSize: 25)
-                              );
-                            }
-                            else{
-                              return Text(
-                              'Error, Stream not found', 
-                              style: TextStyle(fontSize: 25)
-                            );
-                            }
-                          },
-                        ),
+                child: Text(
+                  _displayed,
+                  style: TextStyle(fontSize: 25),
+                ),
               ),
             )
           ],
@@ -211,5 +259,4 @@ class DialogueBox extends StatelessWidget{
       )
     );
   }
-  
 }

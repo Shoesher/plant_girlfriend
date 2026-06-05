@@ -5,19 +5,18 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:twine_parser/twine_parser.dart';
 
-
 class Game extends StatefulWidget {
   const Game({super.key});
-  
+
   @override
   State<Game> createState() => Game_();
 }
 
-class Game_ extends State<Game>{
+class Game_ extends State<Game> {
   final parser = TwineParser();
   late Future<Passage> futurePassage;
   Passage? currentPassage;
-  int _speed = 70;
+  int _speed = 50;
 
   @override
   void initState() {
@@ -34,120 +33,142 @@ class Game_ extends State<Game>{
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        child: FutureBuilder(future: futurePassage,
+        child: FutureBuilder(
+          future: futurePassage,
 
-        builder: (build, snapshot){
-          if (snapshot.connectionState == ConnectionState.waiting){
-            return Center(
-              child: CircularProgressIndicator(color: const Color.fromARGB(255, 73, 163, 76),),
-            );
-          }
+          builder: (build, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return Center(
+                child: CircularProgressIndicator(
+                  color: const Color.fromARGB(255, 73, 163, 76),
+                ),
+              );
+            }
 
-          if (snapshot.hasError){
-            return Center(
-              child: Text('Failed to load story \n ${snapshot.error}'),
-            );
-          }
+            if (snapshot.hasError) {
+              return Center(
+                child: Text('Failed to load story \n ${snapshot.error}'),
+              );
+            }
 
-          return 
-          Align(
-            alignment: Alignment(0, 0.8),
-            child: SizedBox(
-              width: 1000,
-              height: 400,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Align(
-                    alignment: AlignmentGeometry.xy(1, 0),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        border: Border.all(color: const Color.fromARGB(255, 60, 105, 70), width: 3),
-                        borderRadius: BorderRadius.circular(5)
+            List parseList = parseImage(currentPassage!.content);
+            String imgUrl = parseList[0];
+            String content = parseList[1];
+
+            return Stack(
+              alignment: AlignmentGeometry.center,
+              children: [
+                Image.network(
+                  imgUrl,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container();
+                  },
+                ),
+                Align(
+                  alignment: Alignment.bottomCenter,
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 40),
+                    child: SizedBox(
+                      width: 1000,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Container(
+                            decoration: BoxDecoration(
+                              border: currentPassage!.choices.isEmpty ? null : Border.all(
+                                color: const Color.fromARGB(255, 60, 105, 70),
+                                width: 3,
+                              ),
+                              borderRadius: BorderRadius.circular(5),
+                            ),
+                            child: _buildChoices(currentPassage!.choices),
+                          ),
+                          const SizedBox(height: 8),
+                          DialogueBox(
+                            speaker: 'Plant Chan',
+                            text: content,
+                            speed: _speed,
+                          ),
+                          _speedUp(),
+                        ],
                       ),
-                      child: _buildChoices(currentPassage!.choices),
-                    )
+                    ),
                   ),
-                  const SizedBox(height: 2),
-                  Align(
-                    child: DialogueBox(speaker: 'Plant Chan', text: currentPassage!.content, speed: _speed),
-                  ),
-                  _speedUp()
-                ],
-              )
-            )
-          );
-        }),
-      )
+                ),
+              ],
+            );
+          },
+        ),
+      ),
     );
   }
+
   /// First value returns the image url.
   /// Second value returns the rest of the content.
-  List<String> parseImage(String content){
+  List<String> parseImage(String content) {
     // Extract text inside <>
     RegExp tagRegex = RegExp(r'<(.*?)>');
     Match? match = tagRegex.firstMatch(content);
-    String? tagContent = match?.group(1); // 'name'
+    String? tagContent = match?.group(
+      1,
+    ); // Gets the content on the inside of the <>
 
     // Remove the <> and its contents from the string
-    String rest = content.replaceAll(RegExp(r'\s*<.*?>'), '').trim(); // 'Hello, my name is.'
+    String rest = content.replaceAll(RegExp(r'\s*<.*?>\s'), '').trim();
 
-    List<String> result = [tagContent!, rest];
+    List<String> result = [tagContent ?? '', rest];
 
     return result;
   }
-  
 
-  Future<Passage> getStartStory() async{
+  Future<Passage> getStartStory() async {
     final storyHtml = await File('assets/PlantGirlTwine.html').readAsString();
 
     await parser.parseStory(storyHtml);
     final startPassage = parser.getStartPassage();
-    
+
     currentPassage = startPassage;
 
     return startPassage;
   }
 
-  Widget _buildTextBox(){
+  Widget _buildTextBox() {
     return Container();
   }
 
-  void updatePassage(String passageName){
+  void updatePassage(String passageName) {
     setState(() {
       currentPassage = parser.getPassage(passageName);
     });
   }
 
-  Widget _buildChoices(List<Choice> choices){
+  Widget _buildChoices(List<Choice> choices) {
     return Column(
+      mainAxisSize: MainAxisSize.min,
       spacing: 10,
       // runSpacing: 10,
       // alignment: WrapAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.end,
-      children: 
-        choices.map((choice) {
-          return ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Color.fromARGB(255, 73, 129, 82)
-            ),
-            onPressed: () {
-              updatePassage(choice.targetPassage);
-            },
-            child: Text(
-              choice.text,
-              style: TextStyle(color: Colors.white),
-            )
-          );
-        }
-      ).toList()
+      children: choices.map((choice) {
+        return ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Color.fromARGB(255, 73, 129, 82),
+          ),
+          onPressed: () {
+            updatePassage(choice.targetPassage);
+          },
+          child: Text(choice.text, style: TextStyle(color: Colors.white)),
+        );
+      }).toList(),
     );
   }
 
   Widget _speedUp() {
-        return TextButton(
-          child: Text('Speed Up'),
-          onPressed: () => setState(() => _speed = 20));
+    return TextButton(
+      child: Text('Speed Up'),
+      onPressed: () => setState(() => _speed = 20),
+    );
   }
 }
 
@@ -227,7 +248,7 @@ class _DialogueBoxState extends State<DialogueBox> {
         height: boxHeight,
         decoration: BoxDecoration(
           color: Color.fromARGB(190, 155, 255, 135),
-          borderRadius: BorderRadiusGeometry.circular(20)
+          borderRadius: BorderRadiusGeometry.circular(20),
         ),
         child: Column(
           children: [
@@ -235,11 +256,11 @@ class _DialogueBoxState extends State<DialogueBox> {
               width: double.infinity,
               height: boxHeight - 175,
               decoration: BoxDecoration(
-                color: Color.fromARGB(197, 107, 150, 99)
+                color: Color.fromARGB(197, 107, 150, 99),
               ),
               child: Padding(
                 padding: EdgeInsetsGeometry.only(left: 10, top: 2, bottom: 2),
-                child: Text(widget.speaker)
+                child: Text(widget.speaker),
               ),
             ),
             Container(
@@ -248,15 +269,12 @@ class _DialogueBoxState extends State<DialogueBox> {
               decoration: BoxDecoration(),
               child: Padding(
                 padding: EdgeInsetsGeometry.only(left: 10, top: 2, bottom: 2),
-                child: Text(
-                  _displayed,
-                  style: TextStyle(fontSize: 25),
-                ),
+                child: Text(_displayed, style: TextStyle(fontSize: 25)),
               ),
-            )
+            ),
           ],
         ),
-      )
+      ),
     );
   }
 }

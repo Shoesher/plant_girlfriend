@@ -14,7 +14,7 @@ class Home extends StatefulWidget {
 
 class _Home extends State<Home> {
   final network mainNetwork = network();
-  bool _showSidebar = false;
+   int _selectedIndex = 0;
 
   @override
   void initState() {
@@ -36,6 +36,7 @@ class _Home extends State<Home> {
         children: [
           Column(
             children: [
+
               AppBar(
                 title: const Text(
                   'Plant Girlfriend',
@@ -47,115 +48,124 @@ class _Home extends State<Home> {
                 ),
                 backgroundColor: const Color.fromARGB(255, 163, 255, 126),
                 elevation: 0,
-                actions: [
-                  IconButton(
-                    icon: const Icon(Icons.menu, color: Colors.white, size: 40),
-                    onPressed: () {
-                      setState(() {
-                        _showSidebar = !_showSidebar;
-                      });
-                    },
-                  ),
-                ],
               ),
               Expanded(
-                child: SingleChildScrollView(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        StreamBuilder<String>(
-                          stream: mainNetwork.socketHandler.incomingMessagesStream,
-                          builder: (context, snapshot) {
-                            if (snapshot.hasData) {
-                              mainNetwork.parseSocket(snapshot.data!);
-                            }
-                            return Center(
-                              child: Column(
-                                children: [
-                                  _buildBox('Brightness: ', mainNetwork.brightness + "%"),
-                                  _buildBox('Humidity: ', mainNetwork.humidity + "%"),
-                                  _buildBox('Temperature: ', mainNetwork.temperature + " °C"),
-                                  _buildBox('Moisture: ', mainNetwork.moisture + "%")
-                                ],
-                              )
-                            );
-                          },
+                child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildNavbar(context),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            StreamBuilder<String>(
+                              stream: mainNetwork.socketHandler.incomingMessagesStream,
+                              builder: (context, snapshot) {
+                                if (snapshot.hasData) {
+                                  mainNetwork.parseSocket(snapshot.data!);
+                                }
+                                return Center(
+                                  child: Column(
+                                    children: [
+                                      _buildBox('Brightness: ', mainNetwork.brightness + "%"),
+                                      _buildBox('Humidity: ', mainNetwork.humidity + "%"),
+                                      _buildBox('Temperature: ', mainNetwork.temperature + " °C"),
+                                      _buildBox('Moisture: ', mainNetwork.moisture + "%")
+                                    ],
+                                  )
+                                );
+                              },
+                            ),
+                            const SizedBox(height: 20),
+                          ],
                         ),
-                        const SizedBox(height: 20),
-                      ],
+                      ),
                     ),
                   ),
-                ),
-              ),
-            ],
-          ),
-          if (_showSidebar)
-            GestureDetector(
-              onTap: () {
-                setState(() {
-                  _showSidebar = false;
-                });
-              },
-              child: Container(
-                // ignore: deprecated_member_use
-                color: const Color.fromARGB(255, 135, 255, 131).withOpacity(0.5),
-              ),
-            ),
-          AnimatedPositioned(
-            duration: const Duration(milliseconds: 300),
-            top: 0,
-            bottom: 0,
-            right: _showSidebar ? 0 : -250,
-            child: _buildSideBar(context),
-          ),
+                ],
+              )
+            )
+          ],
+          ),         
         ],
       ),
     );
   }
 
-  Widget _buildSideBar(BuildContext context) {
-    return Container(
-      width: 250,
-      color: const Color.fromARGB(255, 30, 30, 30),
-      child: Column(
-        children: [
-          const DrawerHeader(
-            child: Text(
-              'Options',
-              style: TextStyle(fontSize: 35, fontWeight: FontWeight.bold, color: Colors.white),
-            ),
-          ),
-          ListTile(
-            leading: const Icon(Icons.settings, color: Colors.white),
-            title: const Text('Settings', style: TextStyle(color: Colors.white)),
-            onTap: () {
-              Navigator.push(context,
-                  MaterialPageRoute(builder: (context) => const Settings()));
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.abc, color: Colors.white),
-            title: const Text('Game', style: TextStyle(color: Colors.white)),
-            onTap: () {
-              Navigator.push(context,
-                  MaterialPageRoute(builder: (context) => const Game()));
-            }
-          ),
-          ListTile(
-            leading: const Icon(Icons.book_outlined, color: Colors.white),
-            title: const Text('Docs', style: TextStyle(color: Colors.white)),
-            onTap: () {},
-          ),
-          ListTile(
-            leading: const Icon(Icons.exit_to_app, color: Colors.white),
-            title: const Text('Exit', style: TextStyle(color: Colors.white)),
-            onTap: () => exit(0),
-          ),
-        ],
-      ),
-    );
+  Widget _buildNavbar(BuildContext context) { 
+    return 
+    NavigationRail( 
+      extended: true, 
+      minExtendedWidth: 100, 
+      backgroundColor: const Color.fromARGB(255, 255, 238, 215), 
+      selectedIndex: _selectedIndex, 
+      indicatorColor: Color.fromARGB(0, 1, 1, 1), 
+      //indicatorShape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)), 
+      selectedIconTheme: IconThemeData(color: Color.fromARGB(0, 1, 1, 1), size: 60), 
+      groupAlignment: 0.0,
+
+      onDestinationSelected: (int index) {
+      switch (index) {
+        case 0: 
+          Navigator.push(context, MaterialPageRoute(builder: (context) => const Home()));
+          break;
+        case 1: 
+          Navigator.push(context, MaterialPageRoute(builder: (context) => const Game()));
+          break;
+        case 2: 
+          Navigator.push(context, MaterialPageRoute(builder: (context) => const Settings()));
+          break;
+        case 3: 
+          //temp bcuz no store
+          Navigator.push(context, MaterialPageRoute(builder: (context) => const Game()));
+          break;
+        case 4: 
+          exit(0);
+      }
+      setState(() => _selectedIndex = index);
+    },
+
+      destinations: const [ 
+        NavigationRailDestination( 
+          icon: SizedBox( width: 60, height: 60, child: Icon(Icons.home_filled, size: 60, color: Color.fromARGB(255, 87, 42, 0)), 
+          
+          ), 
+          label: Text(''),
+          padding: EdgeInsets.only(bottom: 60.0, left: 15),
+        ), 
+        NavigationRailDestination( 
+          icon: SizedBox( width: 60, height: 60, child: Icon(Icons.videogame_asset, size: 60, color: Color.fromARGB(255, 87, 42, 0)), 
+          
+          ), 
+          label: Text(''), 
+          padding: EdgeInsets.only(bottom: 60.0, left: 15),
+        ), 
+        NavigationRailDestination( 
+          icon: SizedBox( width: 60, height: 60, child: Icon(Icons.settings, size: 60, color: Color.fromARGB(255, 87, 42, 0)), 
+          
+          ), 
+          label: Text(''), 
+          padding: EdgeInsets.only(bottom: 60.0, left: 15),
+        ), 
+        NavigationRailDestination( 
+          icon: SizedBox( width: 60, height: 60, child: Icon(Icons.store, size: 60, color: Color.fromARGB(255, 87, 42, 0)), 
+          
+          ), 
+          label: Text(''), 
+          padding: EdgeInsets.only(bottom: 60.0, left: 15),
+        ), 
+        NavigationRailDestination( 
+          icon: SizedBox( width: 60, height: 60, child: Icon(Icons.exit_to_app, size: 60, color: Color.fromARGB(255, 87, 42, 0)), 
+          
+          ), 
+          label: Text(''), 
+          padding: EdgeInsets.only(bottom: 60.0, left: 15),
+        ), 
+      ], 
+    ); 
   }
 
   Widget _buildBox(String title, String displayedValue) {

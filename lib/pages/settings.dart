@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:plant_girlfriend/pages/game.dart';
 
 class Settings extends StatefulWidget { // Changed to StatefulWidget
   const Settings({super.key});
@@ -10,10 +11,10 @@ class Settings extends StatefulWidget { // Changed to StatefulWidget
 
 class _SettingsPageState extends State<Settings> {
   // State variables for various settings
-  bool _darkModeEnabled = false;
-  final List<String> _fieldOptions = ['Reefscape', 'Crescendo', 'Charged Up', 'Rapid Reacts']; // Default language
+  bool _darkModeEnabled = true;
+  final List<String> _fieldOptions = ['Fullscreen', 'Windowed']; // Default language
   final List<String> _motorOptions = ['NEO', 'CIM', 'KrakenX60'];
-  String _selectedField = 'Reefscape';
+  String _selectedField = 'Fullscreen';
   String _selectedMotor = 'NEO';
   double _robotMass = 74.1;
   double _robotLength = 0.6;
@@ -22,6 +23,9 @@ class _SettingsPageState extends State<Settings> {
   double _bumperWidth = 0.15;
   double _wheelRadius = 0.048;
   final String _appVersion = '1.0.0'; 
+  double textSpeed = Game_().speed.toDouble();
+  double musicVolume = 50;
+  double soundVolume = 50;
 
   @override
   void initState() {
@@ -34,7 +38,7 @@ class _SettingsPageState extends State<Settings> {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     setState(() {
       _darkModeEnabled = prefs.getBool('darkMode') ?? false;
-      _selectedField = prefs.getString('fieldType') ?? 'Reefscape';
+      _selectedField = prefs.getString('fieldType') ?? 'Fullscreen';
       _selectedMotor = prefs.getString('motorType') ?? 'NEO'; 
     });
   }
@@ -201,7 +205,7 @@ class _SettingsPageState extends State<Settings> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF121212),
+      backgroundColor: const Color.fromARGB(255, 255, 246, 234),
       appBar: AppBar(
         title: const Text('Settings',
            style: TextStyle(
@@ -210,45 +214,29 @@ class _SettingsPageState extends State<Settings> {
             fontSize: 35,
           ),
         ),
-        backgroundColor: const Color.fromARGB(255, 0, 71, 179),
+        backgroundColor: const Color.fromARGB(255, 163, 255, 126),
         elevation: 0,
       ),
       body: Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 700), // Max width for content on desktop
+          constraints: const BoxConstraints(maxWidth: 700), 
           child: ListView(
-            padding: const EdgeInsets.all(25.0), // Generous padding for content
+            padding: const EdgeInsets.all(25.0), 
             children: [
-              //General app preferences
-              _buildSectionHeader('General Preferences'),
+              _buildSectionHeader('Display'),
               Card(
-                color: const Color(0xFF2C2C2C),
+                color: const Color.fromARGB(255, 255, 238, 215),
                 elevation: 2,
                 margin: const EdgeInsets.only(bottom: 15.0),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(vertical: 8.0),
                   child: Column(
-                    children: [
-                      SwitchListTile(
-                        title: const Text('Dark Mode', style: TextStyle(fontSize: 18, color: Colors.white)),
-                        subtitle: const Text('Toggle between light and dark themes', style: TextStyle(color: Colors.grey)),
-                        value: _darkModeEnabled,
-                        onChanged: (bool value) {
-                          setState(() {
-                            _darkModeEnabled = value;
-                          });
-                          _saveSetting('darkMode', value);
-                          // For a full app, you would notify MaterialApp to change theme here
-                        },
-                        secondary: const Icon(Icons.dark_mode_outlined, color: Colors.white),
-                        activeThumbColor: Colors.blueAccent,
-                      ),
-                      const Divider(indent: 16, endIndent: 16), // Visual separator
+                    children: [ // Visual separator
                       ListTile(
-                        leading: const Icon(Icons.gamepad, color: Colors.white),
-                        title: const Text('Field Preference', style: TextStyle(fontSize: 18, color: Colors.white)),
-                        subtitle: Text('Current: $_selectedField', style: TextStyle(color: Colors.grey)),
+                        leading: const Icon(Icons.monitor, color: Color.fromARGB(255, 87, 42, 0)),
+                        title: const Text('Screen Preference', style: TextStyle(fontSize: 18, color: Color.fromARGB(255, 87, 42, 0))),
+                        subtitle: Text('Current: $_selectedField', style: TextStyle(color: const Color.fromARGB(255, 78, 78, 78))),
                         trailing: DropdownButton<String>(
                           value: _selectedField,
                           dropdownColor: Colors.black12,
@@ -264,170 +252,110 @@ class _SettingsPageState extends State<Settings> {
                           items: _fieldOptions.map<DropdownMenuItem<String>>((String value) {
                             return DropdownMenuItem<String>(
                               value: value,
-                              child: Text(value, style: const TextStyle(fontSize: 16, color: Colors.white)),
+                              child: Text(value, style: const TextStyle(fontSize: 16, color: Color.fromARGB(255, 87, 42, 0))),
                             );
                           }).toList(),
                         ),
                       ),
+                      const Divider(indent: 16, endIndent: 16),
                     ],
                   ),
                 ),
               ),
 
-              //Robot preferences
-              _buildSectionHeader('Robot Configuration'),
+              _buildSectionHeader('Gameplay'),
               Card(
-                color: const Color(0xFF2C2C2C),
+                color: const Color.fromARGB(255, 255, 238, 215),
                 elevation: 2,
                 margin: const EdgeInsets.only(bottom: 15.0),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 child: Column(
                   children: [
-                    ListTile(
-                      leading: const Icon(Icons.bolt_outlined, color: Colors.white),
-                      title: const Text('Motors', style: TextStyle(fontSize: 18, color: Colors.white)),
-                      subtitle: Text('Current: $_selectedMotor', style: TextStyle(color: Colors.grey)),
-                      trailing: DropdownButton<String>(
-                        value: _selectedMotor,
-                        dropdownColor: Colors.black12,
-                        onChanged: (String? newValue) {
-                          if (newValue != null) {
-                            setState(() {
-                              _selectedMotor = newValue;
-                            });
-                            _saveSetting('motorType', newValue);
-                          }
-                        },
-                        items: _motorOptions.map<DropdownMenuItem<String>>((String value) {
-                          return DropdownMenuItem<String>(
-                            value: value,
-                            child: Text(value, style: const TextStyle(fontSize: 16, color: Colors.white)),
-                          );
-                        }).toList(),
-                      ),
+                    Text('Text Read Speed',
+                      style: TextStyle(color: Color.fromARGB(255, 87, 42, 0), fontSize: 18),
                     ),
-
-                    const Divider(indent: 16, endIndent: 16),
-                    ListTile(
-                      leading: const Icon(Icons.add_box_outlined, color: Colors.white),
-                      title: const Text('Robot Mass', style: TextStyle(fontSize: 18, color: Colors.white)),
-                      subtitle: Text('Mass: $_robotMass', style: TextStyle(color: Colors.grey)),
-                      trailing: const Icon(Icons.arrow_forward_ios),
-                      onTap: () {
-                          _showSettingsDialog(0);
+                    Slider(
+                      value: textSpeed,
+                      min: 0.0,
+                      max: 100.0,
+                      divisions: 10, // Creates discrete snapping points
+                      label: textSpeed.round().toString(), // Shows value indicator bubble
+                      activeColor: const Color.fromARGB(255, 58, 243, 33),
+                      inactiveColor: const Color.fromARGB(255, 33, 243, 79).withOpacity(0.3),
+                      onChanged: (double newValue) {
+                        // 3. Update state to trigger a redraw
+                        setState(() {
+                          textSpeed = newValue;
+                        });
                       },
                     ),
-
                     const Divider(indent: 16, endIndent: 16),
-                    ListTile(
-                      leading: const Icon(Icons.add_box_outlined, color: Colors.white),
-                      title: const Text('Robot Length', style: TextStyle(fontSize: 18, color: Colors.white)),
-                      subtitle: Text('Length: $_robotLength', style: TextStyle(color: Colors.grey)),
-                      trailing: const Icon(Icons.arrow_forward_ios),
-                      onTap: () {
-                          _showSettingsDialog(1);
-                      },
-                    ),
-
-                    const Divider(indent: 16, endIndent: 16),
-                    ListTile(
-                      leading: const Icon(Icons.add_box_outlined, color: Colors.white),
-                      title: const Text('Robot Width', style: TextStyle(fontSize: 18, color: Colors.white)),
-                      subtitle: Text('Width: $_robotWidth', style: TextStyle(color: Colors.grey)),
-                      trailing: const Icon(Icons.arrow_forward_ios),
-                      onTap: () {
-                          _showSettingsDialog(2);
-                      },
-                    ),
-
-                    const Divider(indent: 16, endIndent: 16),
-                    ListTile(
-                      leading: const Icon(Icons.add_box_outlined, color: Colors.white),
-                      title: const Text('Bumper Width', style: TextStyle(fontSize: 18, color: Colors.white)),
-                      subtitle: Text('Width: $_bumperWidth', style: TextStyle(color: Colors.grey)),
-                      trailing: const Icon(Icons.arrow_forward_ios),
-                      onTap: () {
-                          _showSettingsDialog(3);
-                      },
-                    ),
-
-                    const Divider(indent: 16, endIndent: 16),
-                    ListTile(
-                      leading: const Icon(Icons.add_box_outlined, color: Colors.white),
-                      title: const Text('Gear Ratio', style: TextStyle(fontSize: 18, color: Colors.white)),
-                      subtitle: Text('Gear Ratio: $_robotRatio', style: TextStyle(color: Colors.grey)),
-                      trailing: const Icon(Icons.arrow_forward_ios),
-                      onTap: () {
-                          _showSettingsDialog(4);
-                      },
-                    ),
-
-                    const Divider(indent: 16, endIndent: 16),
-                    ListTile(
-                      leading: const Icon(Icons.add_box_outlined, color: Colors.white),
-                      title: const Text('Wheel Radius', style: TextStyle(fontSize: 18, color: Colors.white)),
-                      subtitle: Text('Radius: $_wheelRadius', style: TextStyle(color: Colors.grey)),
-                      trailing: const Icon(Icons.arrow_forward_ios),
-                      onTap: () {
-                          _showSettingsDialog(5);
-                      },
-                    ),
                   ],
                 ),
               ),
 
-              // --- Data & Storage Section ---
-              _buildSectionHeader('Data & Storage'),
+              _buildSectionHeader('Volume'),
               Card(
-                color: const Color(0xFF2C2C2C),
+                color: const Color.fromARGB(255, 255, 238, 215),
+                elevation: 2,
+                margin: const EdgeInsets.only(bottom: 15.0),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                child: Column(
+                  children: [
+                    Text('Music Volume',
+                      style: TextStyle(color: Color.fromARGB(255, 87, 42, 0), fontSize: 18),
+                    ),
+                    Slider(
+                      value: musicVolume,
+                      min: 0.0,
+                      max: 100.0,
+                      divisions: 10, // Creates discrete snapping points
+                      label: musicVolume.round().toString(), // Shows value indicator bubble
+                      activeColor: const Color.fromARGB(255, 58, 243, 33),
+                      inactiveColor: const Color.fromARGB(255, 33, 243, 79).withOpacity(0.3),
+                      onChanged: (double newValue) {
+                        // 3. Update state to trigger a redraw
+                        setState(() {
+                          musicVolume = newValue;
+                        });
+                      },
+                    ),
+                    const Divider(indent: 16, endIndent: 16),
+                    Text('Sound Volume',
+                      style: TextStyle(color: Color.fromARGB(255, 87, 42, 0), fontSize: 18),
+                    ),
+                    Slider(
+                      value: soundVolume,
+                      min: 0.0,
+                      max: 100.0,
+                      divisions: 10, // Creates discrete snapping points
+                      label: soundVolume.round().toString(), // Shows value indicator bubble
+                      activeColor: const Color.fromARGB(255, 58, 243, 33),
+                      inactiveColor: const Color.fromARGB(255, 33, 243, 79).withOpacity(0.3),
+                      onChanged: (double newValue) {
+                        // 3. Update state to trigger a redraw
+                        setState(() {
+                          soundVolume = newValue;
+                        });
+                      },
+                    ),  
+                    const Divider(indent: 16, endIndent: 16),
+                  ],
+                ),
+              ),
+
+              _buildSectionHeader('Game progress & Data'),
+              Card(
+                color: const Color.fromARGB(255, 255, 238, 215),
                 elevation: 2,
                 margin: const EdgeInsets.only(bottom: 15.0),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 child: ListTile(
                   leading: const Icon(Icons.delete_forever, color: Colors.red),
                   title: const Text('Reset', style: TextStyle(fontSize: 18, color: Colors.red)),
-                  subtitle: const Text('Resets all app data and robot configuration settings.', style: TextStyle(color: Colors.grey)),
+                  subtitle: const Text('Resets all app data and configuration settings.', style: TextStyle(color: Colors.grey)),
                   trailing: const Icon(Icons.arrow_forward_ios),
                   onTap: _showClearDataConfirmation, // Call the confirmation dialog
-                ),
-              ),
-
-              // --- About Section ---
-              _buildSectionHeader('About Tankplanner'),
-              Card(
-                color: const Color(0xFF2C2C2C),
-                elevation: 2,
-                margin: const EdgeInsets.only(bottom: 15.0),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                child: Column(
-                  children: [
-                    ListTile(
-                      leading: const Icon(Icons.info_outline, color: Colors.white),
-                      title: const Text('App Version', style: TextStyle(fontSize: 18, color: Colors.white)),
-                      subtitle: Text(_appVersion, style: TextStyle(color: Colors.grey)),
-                    ),
-                    const Divider(indent: 16, endIndent: 16),
-                    ListTile(
-                      leading: const Icon(Icons.description, color: Colors.white),
-                      title: const Text('Documentation', style: TextStyle(fontSize: 18, color: Colors.white)),
-                      trailing: const Icon(Icons.open_in_new),
-                      onTap: () {
-                        // Placeholder for opening privacy policy in a browser or showing in-app
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Opening Tankplanner.ca')),
-                        );
-                      },
-                    ),
-                     const Divider(indent: 16, endIndent: 16),
-                    ListTile(
-                      leading: const Icon(Icons.gavel, color: Colors.white),
-                      title: const Text('Licenses', style: TextStyle(fontSize: 18, color: Colors.white)),
-                      trailing: const Icon(Icons.arrow_forward_ios),
-                      onTap: () {
-                        showLicensePage(context: context, applicationName: 'Native App');
-                      },
-                    ),
-                  ],
                 ),
               ),
             ],

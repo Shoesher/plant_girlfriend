@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:twine_parser/twine_parser.dart';
+import 'package:plant_girlfriend/pages/Nav.dart';
 
 class Game extends StatefulWidget {
   const Game({super.key});
@@ -16,7 +17,7 @@ class Game_ extends State<Game> {
   final parser = TwineParser();
   late Future<Passage> futurePassage;
   Passage? currentPassage;
-  int _speed = 50;
+  int speed = 50;  
 
   @override
   void initState() {
@@ -56,7 +57,7 @@ class Game_ extends State<Game> {
             String content = parseList[1];
 
             return Stack(
-              alignment: AlignmentGeometry.center,
+              alignment: AlignmentGeometry.directional(0, 1),
               children: [
                 Image.network(
                   imgUrl,
@@ -88,13 +89,19 @@ class Game_ extends State<Game> {
                           DialogueBox(
                             speaker: 'Plant Chan',
                             text: content,
-                            speed: _speed,
+                            speed: speed,
                           ),
                           _speedUp(),
                         ],
                       ),
                     ),
                   ),
+                ),
+                Positioned(
+                  left: 0,
+                  top: 0,
+                  bottom: 0,
+                  child: globalNav(),
                 ),
               ],
             );
@@ -167,7 +174,7 @@ class Game_ extends State<Game> {
   Widget _speedUp() {
     return TextButton(
       child: Text('Speed Up'),
-      onPressed: () => setState(() => _speed = 20),
+      onPressed: () => setState(() => speed = 20),
     );
   }
 }

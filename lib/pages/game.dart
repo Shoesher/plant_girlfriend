@@ -81,9 +81,12 @@ class Game_ extends State<Game> {
             return Stack(
               alignment: AlignmentGeometry.directional(0, 1),
               children: [
-                Image.file(
-                  curBackground ?? File('assets/Background_Images/'),
-                  errorBuilder: (context, error, stackTrace) => Container(),
+                Positioned(child: 
+                  Image.file(
+                    curBackground ?? File('assets/Background_Images/'),
+                    errorBuilder: (context, error, stackTrace) => Container(),
+                  ),
+                  left: 100,
                 ),
                 Image.file(
                   curSprite ?? File('assets/PlantGirl_Images/'),

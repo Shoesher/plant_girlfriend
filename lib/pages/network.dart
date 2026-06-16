@@ -5,6 +5,14 @@ class network {
   //Networking objects
   String targetAddress = 'ws://10.0.0.97:81'; 
 
+  network._internal();
+
+  static final network _instance = network._internal();
+
+  factory network(){
+    return _instance;
+  }
+
   final connectionConfig = SocketConnectionOptions(
     pingIntervalMs: 1500,
     timeoutConnectionMs: 6000,
@@ -16,6 +24,7 @@ class network {
   String humidity = 'Null';
   String temperature = 'Null';
   String moisture = 'Null';
+  String anger = 'Null';
 
     //Connect to the web socket and get json file
 
@@ -61,12 +70,13 @@ class network {
    try {
       final Map<String, dynamic> data = jsonDecode(jsonMessage);
 
-      brightness  = data['brightness']?.toString()  ?? brightness;
-      humidity    = data['humidity']?.toString()    ?? humidity;
+      brightness = data['brightness']?.toString()  ?? brightness;
+      humidity = data['humidity']?.toString()    ?? humidity;
       temperature = data['temperature']?.toString() ?? temperature;
       moisture = data['moisture']?.toString() ?? moisture;
+      anger = data['anger']?.toString() ?? anger;
 
-      print('brightness=$brightness  humidity=$humidity  temperature=$temperature moisture=$moisture');
+      print('brightness=$brightness  humidity=$humidity  temperature=$temperature moisture=$moisture anger=$anger');
     } catch (e) {
       print('JSON parse error: $e');
     }

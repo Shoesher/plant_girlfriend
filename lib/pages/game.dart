@@ -3,6 +3,8 @@ import 'dart:core';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:plant_girlfriend/pages/network.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:twine_parser/twine_parser.dart';
 import 'package:plant_girlfriend/pages/Nav.dart';
 
@@ -17,21 +19,36 @@ class Game_ extends State<Game> {
   final parser = TwineParser();
   late Future<Passage> futurePassage;
   Passage? currentPassage;
+  final Map<String, dynamic> gameState = {};
   File? curSprite;
   File? curBackground;
-  int speed = 50;  
+  int speed = 50;
+  static double storyMood = 100;
+  static double plantMood = 100;
+  static double totalMood = (0.8 * plantMood) + (0.2 * storyMood);
 
   final ImageCache imageCache = PaintingBinding.instance.imageCache;
+
+  final network mainNetwork = network();
 
   @override
   void initState() {
     super.initState();
+    // The app owns $mood; seed it before the story is parsed.
+    gameState['mood'] = totalMood;
     futurePassage = getStartStory();
   }
 
   @override
   void dispose() {
     super.dispose();
+  }
+
+  void loadData() async{
+    SharedPreferences preferences = await SharedPreferences.getInstance();
+    preferences.setDouble('mood', 100);
+    preferences.setDouble('chapter', 0);
+    preferences.setString('passage', (currentPassage ?? Passage(name: '', content: '', choices: [])).name);
   }
 
   @override
@@ -56,37 +73,50 @@ class Game_ extends State<Game> {
               );
             }
 
+            //Preload assets
             List parseList = parseAssets(currentPassage!.content);
             String spriteName = parseList[0];
             String backgroundName = parseList[1];
             String content = parseList[2];
-            
-            for (Choice choice in currentPassage!.choices){
+
+            for (Choice choice in currentPassage!.choices) {
               Passage passage = parser.getPassage(choice.targetPassage)!;
               List<String> list = parseAssets(passage.content);
               String sprite = list[0];
               String background = list[1];
-              if (sprite.isNotEmpty){
-                precacheImage(FileImage(File('assets/PlantGirl_Images/$sprite')), context);
+              if (sprite.isNotEmpty) {
+                precacheImage(
+                  FileImage(File('assets/PlantGirl_Images/$sprite')),
+                  context,
+                );
               }
 
-              if (background.isNotEmpty){
-                precacheImage(FileImage(File('assets/PlantGirl_Images/$background')), context);
+              if (background.isNotEmpty) {
+                precacheImage(
+                  FileImage(File('assets/PlantGirl_Images/$background')),
+                  context,
+                );
               }
             }
-            
-            curSprite = spriteName.isNotEmpty ? File('assets/PlantGirl_Images/$spriteName') : curSprite;
-            curBackground = backgroundName.isNotEmpty ? File('assets/Background_Images/$backgroundName') : curBackground;
-            
+
+            curSprite = spriteName.isNotEmpty
+                ? File('assets/PlantGirl_Images/$spriteName')
+                : curSprite;
+            curBackground = backgroundName.isNotEmpty
+                ? File('assets/Background_Images/$backgroundName')
+                : curBackground;
+
+
+            //Creating the Visual Novel environment
             return Stack(
               alignment: AlignmentGeometry.directional(0, 1),
               children: [
-                Positioned(child: 
-                  Image.file(
+                Positioned(
+                  left: 100,
+                  child: Image.file(
                     curBackground ?? File('assets/Background_Images/'),
                     errorBuilder: (context, error, stackTrace) => Container(),
                   ),
-                  left: 100,
                 ),
                 Image.file(
                   curSprite ?? File('assets/PlantGirl_Images/'),
@@ -106,10 +136,17 @@ class Game_ extends State<Game> {
                         children: [
                           Container(
                             decoration: BoxDecoration(
-                              border: currentPassage!.choices.isEmpty ? null : Border.all(
-                                color: const Color.fromARGB(255, 60, 105, 70),
-                                width: 3,
-                              ),
+                              border: currentPassage!.choices.isEmpty
+                                  ? null
+                                  : Border.all(
+                                      color: const Color.fromARGB(
+                                        255,
+                                        60,
+                                        105,
+                                        70,
+                                      ),
+                                      width: 3,
+                                    ),
                               borderRadius: BorderRadius.circular(5),
                             ),
                             child: _buildChoices(currentPassage!.choices),
@@ -126,12 +163,7 @@ class Game_ extends State<Game> {
                     ),
                   ),
                 ),
-                Positioned(
-                  left: 0,
-                  top: 0,
-                  bottom: 0,
-                  child: globalNav(),
-                ),
+                Positioned(left: 0, top: 0, bottom: 0, child: globalNav()),
               ],
             );
           },
@@ -140,17 +172,22 @@ class Game_ extends State<Game> {
     );
   }
 
+
   /// First value returns the image url.
   /// Second value returns the rest of the content.
   List<String> parseAssets(String content) {
     // Extract text inside <>
     RegExp spriteRegex = RegExp(r'<(.*?)>');
     Match? spriteMatch = spriteRegex.firstMatch(content);
-    String? spriteContent = spriteMatch?.group(1); // Gets the content on the inside of the <>
-    
+    String? spriteContent = spriteMatch?.group(
+      1,
+    ); // Gets the content on the inside of the <>
+
     RegExp bckgrndRegex = RegExp(r'\/(.*?)\/');
     Match? bckgrndMatch = bckgrndRegex.firstMatch(content);
-    String? bckgrndContent = bckgrndMatch?.group(1); // Gets the content on the inside of the <>
+    String? bckgrndContent = bckgrndMatch?.group(
+      1,
+    ); // Gets the content on the inside of the <>
 
     // Remove the <> and its contents from the string
     String rest = content.replaceAll(RegExp(r'<.*?>'), '');
@@ -165,11 +202,14 @@ class Game_ extends State<Game> {
     final storyHtml = await File('assets/PlantGirlTwine.html').readAsString();
 
     await parser.parseStory(storyHtml);
-    final startPassage = parser.getStartPassage();
+    final start = parser.getStartPassage();
+    final parsed = parser.getPassage(start.name, gameState: gameState) ?? start;
+    if (parsed.stateChanges != null) gameState.addAll(parsed.stateChanges!);
 
-    currentPassage = startPassage;
+    currentPassage = parsed;
+    updateMood(100);
 
-    return startPassage;
+    return parsed;
   }
 
   Widget _buildTextBox() {
@@ -178,8 +218,24 @@ class Game_ extends State<Game> {
 
   void updatePassage(String passageName) {
     setState(() {
-      currentPassage = parser.getPassage(passageName);
+      final next = parser.getPassage(passageName, gameState: gameState);
+      if (next?.stateChanges != null) gameState.addAll(next!.stateChanges!);
+      currentPassage = next;
       imageCache.clear();
+    });
+  }
+
+  /// Updates the app-owned mood value and re-evaluates the current passage so
+  /// its conditionals and choices reflect the new value.
+  void updateMood(num value) {
+    setState(() {
+      gameState['mood'] = value;
+      if (currentPassage != null) {
+        currentPassage = parser.getPassage(
+          currentPassage!.name,
+          gameState: gameState,
+        );
+      }
     });
   }
 

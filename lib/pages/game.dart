@@ -1,31 +1,38 @@
 import 'dart:async';
 import 'dart:core';
-import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:twine_parser/twine_parser.dart';
 import 'package:plant_girlfriend/pages/Nav.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class Game extends StatefulWidget {
-  const Game({super.key});
+  /// When opened through GameLoader these are already parsed, so the game
+  /// starts instantly. When null, Game falls back to loading itself.
+  final TwineParser? preloadedParser;
+  final Passage? preloadedStart;
+
+  const Game({super.key, this.preloadedParser, this.preloadedStart});
 
   @override
   State<Game> createState() => Game_();
 }
 
 class Game_ extends State<Game> {
-  final parser = TwineParser();
+  late final TwineParser parser;
   late Future<Passage> futurePassage;
   Passage? currentPassage;
-  File? curSprite;
-  File? curBackground;
-  int speed = 50;  
+  String? curSprite;
+  String? curBackground;
+  int speed = 50;
 
   final ImageCache imageCache = PaintingBinding.instance.imageCache;
 
   @override
   void initState() {
     super.initState();
+    parser = widget.preloadedParser ?? TwineParser();
     futurePassage = getStartStory();
   }
 
@@ -60,40 +67,53 @@ class Game_ extends State<Game> {
             String spriteName = parseList[0];
             String backgroundName = parseList[1];
             String content = parseList[2];
-            
-            for (Choice choice in currentPassage!.choices){
+
+            // Precache the images of every passage reachable from here.
+            for (Choice choice in currentPassage!.choices) {
               Passage passage = parser.getPassage(choice.targetPassage)!;
               List<String> list = parseAssets(passage.content);
               String sprite = list[0];
               String background = list[1];
-              if (sprite.isNotEmpty){
-                precacheImage(FileImage(File('assets/PlantGirl_Images/$sprite')), context);
+              if (sprite.isNotEmpty) {
+                precacheImage(
+                  AssetImage('assets/PlantGirl_Images/$sprite'),
+                  context,
+                  onError: (_, __) {},
+                );
               }
 
-              if (background.isNotEmpty){
-                precacheImage(FileImage(File('assets/PlantGirl_Images/$background')), context);
+              if (background.isNotEmpty) {
+                precacheImage(
+                  AssetImage('assets/Background_Images/$background'),
+                  context,
+                  onError: (_, __) {},
+                );
               }
             }
-            
-            curSprite = spriteName.isNotEmpty ? File('assets/PlantGirl_Images/$spriteName') : curSprite;
-            curBackground = backgroundName.isNotEmpty ? File('assets/Background_Images/$backgroundName') : curBackground;
-            
+
+            curSprite = spriteName.isNotEmpty
+                ? 'assets/PlantGirl_Images/$spriteName'
+                : curSprite;
+            curBackground = backgroundName.isNotEmpty
+                ? 'assets/Background_Images/$backgroundName'
+                : curBackground;
+
             return Stack(
               alignment: AlignmentGeometry.directional(0, 1),
               children: [
-                Positioned(child: 
-                  Image.file(
-                    curBackground ?? File('assets/Background_Images/'),
+                if (curBackground != null)
+                  Positioned(
+                    left: 100,
+                    child: Image.asset(
+                      curBackground!,
+                      errorBuilder: (context, error, stackTrace) => Container(),
+                    ),
+                  ),
+                if (curSprite != null)
+                  Image.asset(
+                    curSprite!,
                     errorBuilder: (context, error, stackTrace) => Container(),
                   ),
-                  left: 100,
-                ),
-                Image.file(
-                  curSprite ?? File('assets/PlantGirl_Images/'),
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container();
-                  },
-                ),
                 Align(
                   alignment: Alignment.bottomCenter,
                   child: Padding(
@@ -147,12 +167,11 @@ class Game_ extends State<Game> {
     RegExp spriteRegex = RegExp(r'<(.*?)>');
     Match? spriteMatch = spriteRegex.firstMatch(content);
     String? spriteContent = spriteMatch?.group(1); // Gets the content on the inside of the <>
-    
+
     RegExp bckgrndRegex = RegExp(r'\/(.*?)\/');
     Match? bckgrndMatch = bckgrndRegex.firstMatch(content);
     String? bckgrndContent = bckgrndMatch?.group(1); // Gets the content on the inside of the <>
 
-    // Remove the <> and its contents from the string
     String rest = content.replaceAll(RegExp(r'<.*?>'), '');
     rest = rest.replaceAll(RegExp(r'\/.*?\/'), '').trim();
 
@@ -162,10 +181,19 @@ class Game_ extends State<Game> {
   }
 
   Future<Passage> getStartStory() async {
-    final storyHtml = await File('assets/PlantGirlTwine.html').readAsString();
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String savedPass = prefs.getString('currentPass') ?? 'Intro0';
+
+    if (widget.preloadedStart != null) {
+      currentPassage = widget.preloadedStart;
+      return widget.preloadedStart!;
+    }
+
+    final storyHtml =
+    await rootBundle.loadString('assets/PlantGirlTwine.html');
 
     await parser.parseStory(storyHtml);
-    final startPassage = parser.getStartPassage();
+    final startPassage = parser.getStartPassage(savedPass);
 
     currentPassage = startPassage;
 
@@ -176,19 +204,19 @@ class Game_ extends State<Game> {
     return Container();
   }
 
-  void updatePassage(String passageName) {
+  void updatePassage(String passageName) async {
     setState(() {
       currentPassage = parser.getPassage(passageName);
       imageCache.clear();
     });
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('currentPass', passageName);
   }
 
   Widget _buildChoices(List<Choice> choices) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       spacing: 10,
-      // runSpacing: 10,
-      // alignment: WrapAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.end,
       children: choices.map((choice) {
         return ElevatedButton(
@@ -312,6 +340,7 @@ class _DialogueBoxState extends State<DialogueBox> {
                 child: Text(_displayed, style: TextStyle(fontSize: 25)),
               ),
             ),
+            Container()
           ],
         ),
       ),

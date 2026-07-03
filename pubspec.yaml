@@ -9,6 +9,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  model_viewer_plus: ^1.9.3
   path_provider: ^2.1.5
   shared_preferences: ^2.5.3
   twine_parser: ^0.1.1
@@ -21,3 +22,8 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/Plant_Girl.glb
+    - assets/PlantGirlTwine.html
+    - assets/PlantGirl_Images/
+    - assets/Background_Images/

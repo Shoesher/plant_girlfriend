@@ -1,12 +1,12 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show SystemNavigator;
 import 'package:plant_girlfriend/pages/home.dart';
-import 'package:plant_girlfriend/pages/game.dart';
-import 'package:plant_girlfriend/pages/Settings.dart';
-
+import 'package:plant_girlfriend/pages/intermediate/Loader.dart';
+import 'package:plant_girlfriend/pages/settings.dart';
+ 
 class globalNav extends StatelessWidget {
   const globalNav({super.key});
-
+ 
   @override
   Widget build(BuildContext context) {
     return NavigationRail(
@@ -23,13 +23,15 @@ class globalNav extends StatelessWidget {
             Navigator.push(context, MaterialPageRoute(builder: (_) => const Home()));
             break;
           case 1:
-            Navigator.push(context, MaterialPageRoute(builder: (_) => const Game()));
+            Navigator.push(context, MaterialPageRoute(builder: (_) => const GameLoader()));
             break;
           case 2:
             Navigator.push(context, MaterialPageRoute(builder: (_) => const Settings()));
             break;
           case 4:
-            exit(0);
+            // exit(0) from dart:io doesn't compile on web; this pops the app
+            // on Android/desktop and is a no-op in the browser.
+            SystemNavigator.pop();
         }
       },
       destinations: const [

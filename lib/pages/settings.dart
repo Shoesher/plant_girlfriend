@@ -281,7 +281,7 @@ class _SettingsPageState extends State<Settings> {
                       divisions: 10, // Creates discrete snapping points
                       label: textSpeed.round().toString(), // Shows value indicator bubble
                       activeColor: const Color.fromARGB(255, 58, 243, 33),
-                      inactiveColor: const Color.fromARGB(255, 33, 243, 79).withOpacity(0.3),
+                      inactiveColor: const Color.fromARGB(255, 33, 243, 79).withValues(alpha: 0.3),
                       onChanged: (double newValue) {
                         // 3. Update state to trigger a redraw
                         setState(() {
@@ -312,7 +312,7 @@ class _SettingsPageState extends State<Settings> {
                       divisions: 10, // Creates discrete snapping points
                       label: musicVolume.round().toString(), // Shows value indicator bubble
                       activeColor: const Color.fromARGB(255, 58, 243, 33),
-                      inactiveColor: const Color.fromARGB(255, 33, 243, 79).withOpacity(0.3),
+                      inactiveColor: const Color.fromARGB(255, 33, 243, 79).withValues(alpha: 0.3),
                       onChanged: (double newValue) {
                         // 3. Update state to trigger a redraw
                         setState(() {
@@ -331,7 +331,7 @@ class _SettingsPageState extends State<Settings> {
                       divisions: 10, // Creates discrete snapping points
                       label: soundVolume.round().toString(), // Shows value indicator bubble
                       activeColor: const Color.fromARGB(255, 58, 243, 33),
-                      inactiveColor: const Color.fromARGB(255, 33, 243, 79).withOpacity(0.3),
+                      inactiveColor: const Color.fromARGB(255, 33, 243, 79).withValues(alpha: 0.3),
                       onChanged: (double newValue) {
                         // 3. Update state to trigger a redraw
                         setState(() {

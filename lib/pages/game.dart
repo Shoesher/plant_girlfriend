@@ -95,7 +95,7 @@ class Game_ extends State<Game> {
                     precacheImage(
                       AssetImage('assets/PlantGirl_Images/$sprite'),
                       context,
-                      onError: (_, __) {},
+                      onError: (_, _) {},
                     );
                   }
 
@@ -219,7 +219,7 @@ class Game_ extends State<Game> {
     await rootBundle.loadString('assets/PlantGirlTwine.html');
 
     await parser.parseStory(storyHtml);
-    final start = parser.getSavedPassage(savedPass);
+    final start = getSavedPassage(savedPass);
     final parsed = parser.getPassage(start.name, gameState: gameState) ?? start;
     if (parsed.stateChanges != null) gameState.addAll(parsed.stateChanges!);
 
@@ -227,6 +227,10 @@ class Game_ extends State<Game> {
     updateMood(100);
 
     return parsed;
+  }
+
+  Passage getSavedPassage(String savedPoint){
+    return parser.getPassage(savedPoint) ?? parser.getStartPassage();
   }
 
   Widget _buildTextBox() {

@@ -92,7 +92,7 @@ class _GameLoaderState extends State<GameLoader>
       await _parser.parseStory(storyHtml);
       SharedPreferences prefs = await SharedPreferences.getInstance();
       String savedPass = prefs.getString('currentPass') ?? 'Intro0';
-      final Passage startPassage = _parser.getSavedPassage(savedPass);
+      final Passage startPassage = _parser.getPassage(savedPass) ?? _parser.getStartPassage();
  
       _setProgress(0.75, 'Waking up Plant Chan...');
       await _precachePassageImages(startPassage);
@@ -137,14 +137,14 @@ class _GameLoaderState extends State<GameLoader>
       jobs.add(precacheImage(
         AssetImage('assets/PlantGirl_Images/$sprite'),
         context,
-        onError: (_, __) {}, // missing image shouldn't kill the loader
+        onError: (_, _) {}, // missing image shouldn't kill the loader
       ));
     }
     if (background != null && background.isNotEmpty) {
       jobs.add(precacheImage(
         AssetImage('assets/Background_Images/$background'),
         context,
-        onError: (_, __) {},
+        onError: (_, _) {},
       ));
     }
     await Future.wait(jobs);

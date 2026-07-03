@@ -8,7 +8,6 @@ import 'package:plant_girlfriend/pages/network.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:twine_parser/twine_parser.dart';
 import 'package:plant_girlfriend/pages/Nav.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class Game extends StatefulWidget {
   /// When opened through GameLoader these are already parsed, so the game
@@ -88,23 +87,17 @@ class Game_ extends State<Game> {
             String content = parseList[2];
 
             for (Choice choice in currentPassage!.choices) {
-
-            // Precache the images of every passage reachable from here.
-            for (Choice choice in currentPassage!.choices) {
-              Passage passage = parser.getPassage(choice.targetPassage)!;
-              List<String> list = parseAssets(passage.content);
-              String sprite = list[0];
-              String background = list[1];
-              if (sprite.isNotEmpty)  {
-                precacheImage(
-                  
-                  AssetImage('assets/PlantGirl_Images/$sprite'),
-                 
-                  context,
-                  onError: (_, __) {},
-                ,
-                );
-              }
+                  Passage passage = parser.getPassage(choice.targetPassage)!;
+                  List<String> list = parseAssets(passage.content);
+                  String sprite = list[0];
+                  String background = list[1];
+                  if (sprite.isNotEmpty)  {
+                    precacheImage(
+                      AssetImage('assets/PlantGirl_Images/$sprite'),
+                      context,
+                      onError: (_, __) {},
+                    );
+                  }
 
               if (background.isNotEmpty) {
                 precacheImage(
@@ -122,50 +115,24 @@ class Game_ extends State<Game> {
                 : curBackground;
 
 
-            //Creating the Visual Novel environment
-              if (background.isNotEmpty) {
-                precacheImage(
-                  AssetImage('assets/Background_Images/$background'),
-                  context,
-                  onError: (_, __) {},
-                );
-              }
-            }
-
-            curSprite = spriteName.isNotEmpty
-                ? 'assets/PlantGirl_Images/$spriteName'
-                : curSprite;
-            curBackground = backgroundName.isNotEmpty
-                ? 'assets/Background_Images/$backgroundName'
-                : curBackground;
+             //Creating the Visual Novel environment
 
             return Stack(
               alignment: AlignmentGeometry.directional(0, 1),
               children: [
-                Positioned(
-                  left: 100,
-                  child: Image.file(
-                    curBackground ?? File('assets/Background_Images/'),
                 if (curBackground != null)
                   Positioned(
                     left: 100,
-                    child: Image.asset(
+                    child: Image.file(
                       curBackground!,
                       errorBuilder: (context, error, stackTrace) => Container(),
                     ),
                   ),
                 if (curSprite != null)
-                  Image.asset(
+                  Image.file(
                     curSprite!,
                     errorBuilder: (context, error, stackTrace) => Container(),
                   ),
-                ),
-                Image.file(
-                  curSprite ?? File('assets/PlantGirl_Images/'),
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container();
-                  },
-                ),
                 Align(
                   alignment: Alignment.bottomCenter,
                   child: Padding(

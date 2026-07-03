@@ -92,7 +92,7 @@ class _GameLoaderState extends State<GameLoader>
       await _parser.parseStory(storyHtml);
       SharedPreferences prefs = await SharedPreferences.getInstance();
       String savedPass = prefs.getString('currentPass') ?? 'Intro0';
-      final Passage startPassage = _parser.getStartPassage(savedPass);
+      final Passage startPassage = _parser.getSavedPassage(savedPass);
  
       _setProgress(0.75, 'Waking up Plant Chan...');
       await _precachePassageImages(startPassage);

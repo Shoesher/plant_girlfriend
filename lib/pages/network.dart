@@ -1,3 +1,5 @@
+// ignore_for_file: camel_case_types, avoid_print, prefer_interpolation_to_compose_strings
+
 import 'package:websocket_universal/websocket_universal.dart';
 import 'dart:convert';
 

@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show SystemNavigator;
 import 'package:plant_girlfriend/pages/settings.dart';
 import 'package:plant_girlfriend/pages/Network.dart';
-import 'package:plant_girlfriend/pages/intermediate/Loader.dart';
+import 'package:plant_girlfriend/pages/intermediate/gameSelector.dart';
 import 'package:model_viewer_plus/model_viewer_plus.dart';
 
 class Home extends StatefulWidget {
@@ -156,8 +156,6 @@ class _Home extends State<Home> {
     );
   }
 
-  /// Uma Musume-style stat bar: icon + name, a chunky rounded bar that fills
-  /// and changes color with the value, the numeric value, and a letter grade.
   Widget _buildStatBar({
     required String title,
     required IconData icon,
@@ -306,8 +304,6 @@ class _Home extends State<Home> {
                 MaterialPageRoute(builder: (context) => const GameLoader()));
             break;
           case 4:
-            // exit(0) from dart:io doesn't compile on web; this pops the app
-            // on Android/desktop and is a no-op in the browser.
             SystemNavigator.pop();
         }
         setState(() => _selectedIndex = index);

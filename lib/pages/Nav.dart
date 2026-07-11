@@ -1,7 +1,9 @@
+// ignore_for_file: camel_case_types, file_names
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show SystemNavigator;
 import 'package:plant_girlfriend/pages/home.dart';
-import 'package:plant_girlfriend/pages/intermediate/Loader.dart';
+import 'package:plant_girlfriend/pages/intermediate/gameSelector.dart';
 import 'package:plant_girlfriend/pages/settings.dart';
  
 class globalNav extends StatelessWidget {

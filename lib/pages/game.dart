@@ -1,3 +1,5 @@
+// ignore_for_file: camel_case_types
+
 import 'dart:async';
 import 'dart:core';
 import 'dart:io';
@@ -24,11 +26,14 @@ class Game extends StatefulWidget {
 class Game_ extends State<Game> {
   late final TwineParser parser;
   late Future<Passage> futurePassage;
+  bool bgLoaded = false;  //Not proper state container, temporary solution
   Passage? currentPassage;
   final Map<String, dynamic> gameState = {};
   File? curSprite;
   File? curBackground;
   int speed = 50;
+  double sceneOpacity = 1.0;
+  static const transitionDur = Duration(milliseconds: 100);
   static double storyMood = 100;
   static double plantMood = 100;
   static double totalMood = (0.8 * plantMood) + (0.2 * storyMood);
@@ -61,63 +66,65 @@ class Game_ extends State<Game> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        child: FutureBuilder(
-          future: futurePassage,
-
-          builder: (build, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return Center(
-                child: CircularProgressIndicator(
-                  color: const Color.fromARGB(255, 73, 163, 76),
-                ),
+      backgroundColor: Color.fromARGB(1, 221, 255, 188),
+      body: FutureBuilder(
+        future: futurePassage,
+        builder: (build, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Center(
+              child: CircularProgressIndicator(
+                color: const Color.fromARGB(255, 73, 163, 76),
+              ),
+            );
+          }
+      
+          if (snapshot.hasError) {
+            return Center(
+              child: Text('Failed to load story \n ${snapshot.error}'),
+            );
+          }
+      
+          //Preload assets
+          List parseList = parseAssets(currentPassage!.content);
+          String spriteName = parseList[0];
+          String backgroundName = parseList[1];
+          String content = parseList[2];
+      
+          for (Choice choice in currentPassage!.choices) {
+                Passage passage = parser.getPassage(choice.targetPassage)!;
+                List<String> list = parseAssets(passage.content);
+                String sprite = list[0];
+                String background = list[1];
+                if (sprite.isNotEmpty)  {
+                  precacheImage(
+                    AssetImage('assets/PlantGirl_Images/$sprite'),
+                    context,
+                    onError: (_, _) {},
+                  );
+                }
+      
+            if (background.isNotEmpty) {
+              precacheImage(
+                FileImage(File('assets/PlantGirl_Images/$background')),
+                context,
               );
             }
-
-            if (snapshot.hasError) {
-              return Center(
-                child: Text('Failed to load story \n ${snapshot.error}'),
-              );
-            }
-
-            //Preload assets
-            List parseList = parseAssets(currentPassage!.content);
-            String spriteName = parseList[0];
-            String backgroundName = parseList[1];
-            String content = parseList[2];
-
-            for (Choice choice in currentPassage!.choices) {
-                  Passage passage = parser.getPassage(choice.targetPassage)!;
-                  List<String> list = parseAssets(passage.content);
-                  String sprite = list[0];
-                  String background = list[1];
-                  if (sprite.isNotEmpty)  {
-                    precacheImage(
-                      AssetImage('assets/PlantGirl_Images/$sprite'),
-                      context,
-                      onError: (_, _) {},
-                    );
-                  }
-
-              if (background.isNotEmpty) {
-                precacheImage(
-                  FileImage(File('assets/PlantGirl_Images/$background')),
-                  context,
-                );
-              }
-            }
-
-            curSprite = spriteName.isNotEmpty
-                ? File('assets/PlantGirl_Images/$spriteName')
-                : curSprite;
-            curBackground = backgroundName.isNotEmpty
-                ? File('assets/Background_Images/$backgroundName')
-                : curBackground;
-
-
-             //Creating the Visual Novel environment
-
-            return Stack(
+          }
+      
+          curSprite = spriteName.isNotEmpty
+              ? File('assets/PlantGirl_Images/$spriteName')
+              : curSprite;
+          curBackground = backgroundName.isNotEmpty
+              ? File('assets/Background_Images/$backgroundName')
+              : curBackground;
+      
+      
+          //Creating the Visual Novel environment
+          return AnimatedOpacity(
+            opacity: sceneOpacity,
+            duration: transitionDur,
+            curve: Curves.easeInOut,
+            child: Stack(
               alignment: AlignmentGeometry.directional(0, 1),
               children: [
                 if (curBackground != null)
@@ -174,9 +181,9 @@ class Game_ extends State<Game> {
                 ),
                 Positioned(left: 0, top: 0, bottom: 0, child: globalNav()),
               ],
-            );
-          },
-        ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -201,7 +208,7 @@ class Game_ extends State<Game> {
     String rest = content.replaceAll(RegExp(r'<.*?>'), '');
     rest = rest.replaceAll(RegExp(r'\/.*?\/'), '').trim();
 
-    List<String> result = [spriteContent ?? '', bckgrndContent ?? '', rest];
+    List<String> result = [spriteContent ?? '', bckgrndContent ?? 'outside1.jpg', rest];
 
     return result;
   }
@@ -224,6 +231,7 @@ class Game_ extends State<Game> {
     if (parsed.stateChanges != null) gameState.addAll(parsed.stateChanges!);
 
     currentPassage = parsed;
+  
     updateMood(100);
 
     return parsed;
@@ -233,17 +241,23 @@ class Game_ extends State<Game> {
     return parser.getPassage(savedPoint) ?? parser.getStartPassage();
   }
 
-  Widget _buildTextBox() {
-    return Container();
-  }
 
   void updatePassage(String passageName) async {
+    //Transition out of current scene
+    setState(() => sceneOpacity = 0.0);
+    await Future.delayed(transitionDur);
+
     setState(() {
       final next = parser.getPassage(passageName, gameState: gameState);
       if (next?.stateChanges != null) gameState.addAll(next!.stateChanges!);
       currentPassage = next;
       imageCache.clear();
     });
+
+    //Transition into newly loaded scene
+    await Future.delayed(const Duration(milliseconds: 50));
+    setState(() => sceneOpacity = 1.0);
+
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('currentPass', passageName);
   }

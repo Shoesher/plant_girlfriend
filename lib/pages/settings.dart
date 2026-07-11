@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:plant_girlfriend/pages/game.dart';
@@ -11,18 +13,8 @@ class Settings extends StatefulWidget { // Changed to StatefulWidget
 
 class _SettingsPageState extends State<Settings> {
   // State variables for various settings
-  bool _darkModeEnabled = true;
   final List<String> _fieldOptions = ['Fullscreen', 'Windowed']; // Default language
-  final List<String> _motorOptions = ['NEO', 'CIM', 'KrakenX60'];
   String _selectedField = 'Fullscreen';
-  String _selectedMotor = 'NEO';
-  double _robotMass = 74.1;
-  double _robotLength = 0.6;
-  double _robotWidth = 0.5;
-  double _robotRatio = 8;
-  double _bumperWidth = 0.15;
-  double _wheelRadius = 0.048;
-  final String _appVersion = '1.0.0'; 
   double textSpeed = Game_().speed.toDouble();
   double musicVolume = 50;
   double soundVolume = 50;
@@ -37,9 +29,7 @@ class _SettingsPageState extends State<Settings> {
   Future<void> _loadSettings() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     setState(() {
-      _darkModeEnabled = prefs.getBool('darkMode') ?? false;
       _selectedField = prefs.getString('fieldType') ?? 'Fullscreen';
-      _selectedMotor = prefs.getString('motorType') ?? 'NEO'; 
     });
   }
 
@@ -65,16 +55,7 @@ class _SettingsPageState extends State<Settings> {
 
     // Reset local state variables to their default values after clearing
     setState(() {
-      _darkModeEnabled = false;
       _selectedField = _fieldOptions[0];
-      _selectedMotor = _motorOptions[0];
-      _robotMass = 74.1;
-      _robotLength = 0.6;
-      _robotWidth = 0.5;
-      _robotRatio = 8;
-      _bumperWidth = 0.15;
-      _wheelRadius = 0.048;
-      // Reset any other settings variables you might add to their defaults
     });
 
     ScaffoldMessenger.of(context).showSnackBar(
@@ -83,8 +64,6 @@ class _SettingsPageState extends State<Settings> {
         backgroundColor: Colors.green,
       ),
     );
-    // You might want to navigate the user back to the homepage or prompt a restart
-    // for the changes to fully take effect across the app.
   }
 
   // Dialog to confirm clearing data
@@ -128,79 +107,6 @@ class _SettingsPageState extends State<Settings> {
       return a;
     }
   } 
-
-  // Dialog for changing username
-  void _showSettingsDialog(int action) {
-    TextEditingController massController = TextEditingController(text: _robotMass.toString());
-    TextEditingController rLengthcontroller = TextEditingController(text: _robotLength.toString());
-    TextEditingController rWidthcontroller = TextEditingController(text: _robotWidth.toString());
-    TextEditingController bWidthcontroller = TextEditingController(text: _bumperWidth.toString());
-    TextEditingController ratioController = TextEditingController(text: _robotRatio.toString());
-    TextEditingController radiusController = TextEditingController(text: _wheelRadius.toString());
-
-    List<TextEditingController> settingsController = [massController, rLengthcontroller, rWidthcontroller, bWidthcontroller, ratioController, radiusController];
-    List<String> sharedPrefs = ['botMass', 'botLength', 'botWidth', 'botBumper', 'botRatio', 'botWheels'];
-    String unit = getUnit(action);
-
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Enter Value ($unit)', style: TextStyle(color: Colors.white)),
-          backgroundColor: const Color.fromARGB(144, 0, 0, 0),
-          content: TextField(
-            controller: settingsController[action],
-            style: TextStyle(color: Colors.white),
-            decoration: const InputDecoration(
-              hintText: 'testing',
-              border: OutlineInputBorder(),
-            ),
-          ),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                if (settingsController[action].text.isNotEmpty) {
-                  double? parsedValue = double.tryParse(settingsController[action].text);
-                  if (parsedValue != null) {
-                    await _saveSetting(sharedPrefs[action], parsedValue);
-                    setState(() {
-                      switch (action) {
-                        case 0: _robotMass = parsedValue; break;
-                        case 1: _robotLength = parsedValue; break;
-                        case 2: _robotWidth = parsedValue; break;
-                        case 3: _bumperWidth = parsedValue; break;
-                        case 4: _robotRatio = parsedValue; break;
-                        case 5: _wheelRadius = parsedValue; break;
-                      }
-                    });
-                  }
-                  setState(() {
-                    // _selectedMotor = settingsController[action].text; // Update UI immediately
-                  });
-                  Navigator.of(context).pop();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Data updated successfully!')),
-                  );
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Cannot be empty!')),
-                  );
-                }
-              },
-              child: const Text('Save'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
 
   @override
   Widget build(BuildContext context) {

@@ -5,7 +5,7 @@ import 'dart:convert';
 
 class network {
   //Networking objects
-  String targetAddress = 'ws://10.0.0.97:81'; 
+  String targetAddress = 'ws://192.168.1.91:81'; 
 
   network._internal();
 

@@ -1,12 +1,11 @@
 // ignore_for_file: prefer_interpolation_to_compose_strings
 
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show SystemNavigator;
 import 'package:plant_girlfriend/pages/settings.dart';
 import 'package:plant_girlfriend/pages/Network.dart';
 import 'package:plant_girlfriend/pages/intermediate/gameSelector.dart';
-import 'package:model_viewer_plus/model_viewer_plus.dart';
+// import 'package:model_viewer_plus/model_viewer_plus.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -126,26 +125,26 @@ class _Home extends State<Home> {
                         width: 2,
                       ),
                     ),
-                    child: ModelViewer(
-                      // On web the src is a browser URL and Flutter serves
-                      // bundled assets under assets/<asset-key>, so the key
-                      // 'assets/Plant_Girl.glb' lives at assets/assets/....
-                      src: kIsWeb
-                          ? 'assets/assets/Plant_Girl.glb'
-                          : 'assets/Plant_Girl.glb',
-                      alt: 'Plant Chan',
-                      autoPlay: true,
-                      autoRotate: true,
-                      autoRotateDelay: 0,
-                      rotationPerSecond: '25deg',
-                      ar: false,
-                      cameraControls: true,
-                      disableZoom: true,
-                      disablePan: true,
-                      disableTap: true,
-                      cameraOrbit: '0deg 90deg auto',
-                      fieldOfView: '30deg',
-                    ),
+                    // child: ModelViewer(
+                    //   // On web the src is a browser URL and Flutter serves
+                    //   // bundled assets under assets/<asset-key>, so the key
+                    //   // 'assets/Plant_Girl.glb' lives at assets/assets/....
+                    //   src: kIsWeb
+                    //       ? 'assets/assets/Plant_Girl.glb'
+                    //       : 'assets/Plant_Girl.glb',
+                    //   alt: 'Plant Chan',
+                    //   autoPlay: true,
+                    //   autoRotate: true,
+                    //   autoRotateDelay: 0,
+                    //   rotationPerSecond: '25deg',
+                    //   ar: false,
+                    //   cameraControls: true,
+                    //   disableZoom: true,
+                    //   disablePan: true,
+                    //   disableTap: true,
+                    //   cameraOrbit: '0deg 90deg auto',
+                    //   fieldOfView: '30deg',
+                    // ),
                   ),
                 ),
               ],

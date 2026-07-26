@@ -26,11 +26,12 @@ class Game extends StatefulWidget {
 class Game_ extends State<Game> {
   late final TwineParser parser;
   late Future<Passage> futurePassage;
-  bool bgLoaded = false;  //Not proper state container, temporary solution
+  bool bgLoaded = false; //Not proper state container, temporary solution
   Passage? currentPassage;
   final Map<String, dynamic> gameState = {};
   File? curSprite;
   File? curBackground;
+  String? prevBackgroundName;
   int speed = 50;
   double sceneOpacity = 1.0;
   static const transitionDur = Duration(milliseconds: 100);
@@ -56,11 +57,14 @@ class Game_ extends State<Game> {
     super.dispose();
   }
 
-  void loadData() async{
+  void loadData() async {
     SharedPreferences preferences = await SharedPreferences.getInstance();
     preferences.setDouble('mood', 100);
     preferences.setDouble('chapter', 0);
-    preferences.setString('passage', (currentPassage ?? Passage(name: '', content: '', choices: [])).name);
+    preferences.setString(
+      'passage',
+      (currentPassage ?? Passage(name: '', content: '', choices: [])).name,
+    );
   }
 
   @override
@@ -77,53 +81,53 @@ class Game_ extends State<Game> {
               ),
             );
           }
-      
+
           if (snapshot.hasError) {
             return Center(
               child: Text('Failed to load story \n ${snapshot.error}'),
             );
           }
-      
+
           //Preload assets
           List parseList = parseAssets(currentPassage!.content);
           String spriteName = parseList[0];
           String backgroundName = parseList[1];
           String content = parseList[2];
-      
+
           for (Choice choice in currentPassage!.choices) {
-                Passage passage = parser.getPassage(choice.targetPassage)!;
-                List<String> list = parseAssets(passage.content);
-                String sprite = list[0];
-                String background = list[1];
-                if (sprite.isNotEmpty)  {
-                  precacheImage(
-                    AssetImage('assets/PlantGirl_Images/$sprite'),
-                    context,
-                    onError: (_, _) {},
-                  );
-                }
-      
+            Passage passage = parser.getPassage(choice.targetPassage)!;
+            List<String> list = parseAssets(passage.content);
+            String sprite = list[0];
+            String background = list[1];
+            if (sprite.isNotEmpty) {
+              precacheImage(
+                AssetImage('assets/PlantGirl_Images/$sprite'),
+                context,
+                onError: (_, _) {},
+              );
+            }
+
             if (background.isNotEmpty) {
               precacheImage(
-                FileImage(File('assets/PlantGirl_Images/$background')),
+                FileImage(File('assets/Background_Images/$background')),
                 context,
               );
             }
           }
-      
+
           curSprite = spriteName.isNotEmpty
               ? File('assets/PlantGirl_Images/$spriteName')
               : curSprite;
           curBackground = backgroundName.isNotEmpty
               ? File('assets/Background_Images/$backgroundName')
               : curBackground;
-      
-      
+
           //Creating the Visual Novel environment
           return AnimatedOpacity(
             opacity: sceneOpacity,
             duration: transitionDur,
             curve: Curves.easeInOut,
+            onEnd: () => prevBackgroundName = backgroundName,
             child: Stack(
               alignment: AlignmentGeometry.directional(0, 1),
               children: [
@@ -188,7 +192,6 @@ class Game_ extends State<Game> {
     );
   }
 
-
   /// First value returns the image url.
   /// Second value returns the rest of the content.
   List<String> parseAssets(String content) {
@@ -208,7 +211,11 @@ class Game_ extends State<Game> {
     String rest = content.replaceAll(RegExp(r'<.*?>'), '');
     rest = rest.replaceAll(RegExp(r'\/.*?\/'), '').trim();
 
-    List<String> result = [spriteContent ?? '', bckgrndContent ?? 'outside1.jpg', rest];
+    List<String> result = [
+      spriteContent ?? '',
+      bckgrndContent ?? 'outside1.jpg',
+      rest,
+    ];
 
     return result;
   }
@@ -222,8 +229,7 @@ class Game_ extends State<Game> {
       return widget.preloadedStart!;
     }
 
-    final storyHtml =
-    await rootBundle.loadString('assets/PlantGirlTwine.html');
+    final storyHtml = await rootBundle.loadString('assets/PlantGirlTwine.html');
 
     await parser.parseStory(storyHtml);
     final start = getSavedPassage(savedPass);
@@ -231,21 +237,26 @@ class Game_ extends State<Game> {
     if (parsed.stateChanges != null) gameState.addAll(parsed.stateChanges!);
 
     currentPassage = parsed;
-  
+
     updateMood(100);
 
     return parsed;
   }
 
-  Passage getSavedPassage(String savedPoint){
+  Passage getSavedPassage(String savedPoint) {
     return parser.getPassage(savedPoint) ?? parser.getStartPassage();
   }
 
-
   void updatePassage(String passageName) async {
     //Transition out of current scene
-    setState(() => sceneOpacity = 0.0);
-    await Future.delayed(transitionDur);
+    if ((prevBackgroundName ?? 'null') !=
+      parseAssets(parser.getPassage(passageName)?.content ?? '')[1]) {
+      setState(() => sceneOpacity = 0.0);
+      await Future.delayed(transitionDur);
+    }
+
+    // setState(() => sceneOpacity = 0.0);
+    // await Future.delayed(transitionDur);
 
     setState(() {
       final next = parser.getPassage(passageName, gameState: gameState);
@@ -403,7 +414,7 @@ class _DialogueBoxState extends State<DialogueBox> {
                 child: Text(_displayed, style: TextStyle(fontSize: 25)),
               ),
             ),
-            Container()
+            Container(),
           ],
         ),
       ),
